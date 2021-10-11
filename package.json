@@ -1,0 +1,23 @@
+{
+  "name": "three.js-refraction",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "@types/three": "^0.133.0",
+    "dts2hx": "^0.16.1",
+    "esbuild": "^0.13.4",
+    "three": "^0.133.1",
+    "live-server": "^1.2.1",
+    "@types/dat.gui": "^0.7.7",
+    "dat.gui": "^0.7.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "haxe build.hxml && live-server --watch=\"index.html,bin/bundle.js,assets\" .",
+    "externs": "dts2hx three three/examples/jsm/loaders/RGBELoader dat.gui --noGlobal"
+  },
+  "author": "",
+  "license": "ISC"
+}
