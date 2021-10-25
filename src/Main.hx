@@ -26,6 +26,8 @@ import three.Uniform;
 // settings
 var pixelRatio = min(window.devicePixelRatio, 1);
 
+var overrideTransmissionFramebuffer = false;
+
 final scene = new three.Scene();
 final camera = new three.PerspectiveCamera(100, 1, 0.0001, 10);
 final canvas = {
@@ -56,8 +58,14 @@ final renderer = {
 	_.toneMappingExposure = 0.2;
 	_.physicallyCorrectLights = true;
 
+	var _getTransmissionRenderTarget = (_: Dynamic).getTransmissionRenderTarget;
+
 	var viewport = new Vector4();
 	(_: Dynamic).getTransmissionRenderTarget = () -> {
+		if (!overrideTransmissionFramebuffer) {
+			return _getTransmissionRenderTarget();
+		}
+
 		_.getCurrentViewport(viewport);
 		renderTargetStore.acquire('transmission', viewport.width, viewport.height, {
 			magFilter: LinearFilter,
@@ -98,8 +106,6 @@ var bloomExponent = 2.2;
 var bloomSigma = 0.38;
 var bloomBlurRadius = 0.027;
 var bloomBlurDownsampleIterations = 1;
-
-var overrideTransmissionFramebuffer = false;
 
 final sphere = {
 	var _ = new Mesh(new three.SphereGeometry(1, 80, 80), new MeshPhysicalMaterial({

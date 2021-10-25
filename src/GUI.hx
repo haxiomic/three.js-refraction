@@ -12,12 +12,7 @@ function init() {
 	gui.domElement.parentElement.style.zIndex = '1000';
 	var renderer = Main.renderer;
 
-	addProperty(gui, Main.overrideTransmissionFramebuffer).name('Fix Transmission').onChange(function(value) {
-		if ((renderer: Dynamic)._transmissionRenderTarget) {
-			(renderer: Dynamic)._transmissionRenderTarget.dispose();
-			(renderer: Dynamic)._transmissionRenderTarget = null;
-		}
-	});
+	addProperty(gui, Main.overrideTransmissionFramebuffer).name('Fix Transmission');
 
 	{	// Rendering pipeline
 		var g = gui.addFolder('Rendering');
