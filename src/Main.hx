@@ -8,6 +8,7 @@ import rendering.Background;
 import rendering.FragmentRenderer;
 import rendering.PostProcess;
 import rendering.RenderTargetStore;
+import rendering.WebGLRenderTarget;
 import three.AmbientLight;
 import three.BoxGeometry;
 import three.BufferGeometry;
@@ -20,7 +21,6 @@ import three.Points;
 import three.RawShaderMaterial;
 import three.SphereGeometry;
 import three.Uniform;
-import tool.LightingDebugProbes;
 
 // settings
 var pixelRatio = min(window.devicePixelRatio, 1);
@@ -77,16 +77,18 @@ final fragmentRenderer = new FragmentRenderer(renderer);
 final renderTargetStore = new RenderTargetStore();
 final postProcess = new PostProcess(renderer);
 
-var bloomEnabled = true;
-var bloomAlpha = 0.21;
-var bloomExponent = 2;
-var bloomSigma = 0.3;
-var bloomBlurRadius = 0.02;
-var bloomBlurDownsampleIterations = 0;
+var bloomEnabled = false;
+var bloomAlpha = 0.39;
+var bloomExponent = 2.2;
+var bloomSigma = 0.38;
+var bloomBlurRadius = 0.027;
+var bloomBlurDownsampleIterations = 1;
+
+var overrideTransmissionFramebuffer = false;
 
 final sphere = {
 	var _ = new Mesh(new three.SphereGeometry(1, 80, 80), new MeshPhysicalMaterial({
-		roughness: 0.01,
+		roughness: 0.0,
 		color: 0xffffff,
 		transmission: 0.9,
 		attenuationTint: new Color(0x59ff),
@@ -136,6 +138,11 @@ final particles = {
 		armSpreadExponent: -0.1,
 	});
 	var _ = new Points(particleGeom, m);
+	_.onBeforeRender = (renderer, scene, camera, geometry, material, group) -> {
+		var rt: WebGLRenderTarget = cast renderer.getRenderTarget();
+		var height: Float = rt != null ? rt.height : gl.drawingBufferHeight;
+		m.pointScale.value = height * 0.005;
+	};
 	_;
 }
 
@@ -144,9 +151,6 @@ function main() {
 
 	var amb = new AmbientLight(0xFFFFFF, 0.2);
 	scene.add(amb);
-
-	var probes = new LightingDebugProbes();
-	// scene.add(probes);
 
 	// scene.add(cube);
 	scene.add(particles);
@@ -206,10 +210,21 @@ function animationFrame(time_ms: Float) {
 			magFilter: LinearFilter,
 			minFilter: LinearFilter,
 			depthBuffer: true,
-			type: FloatType,
+			type: HalfFloatType,
 			encoding: LinearEncoding,
-			msaaSamples: 8,
+			msaaSamples: 4,
 		}) : null;
+
+		// transmission pass framebuffer
+		if (overrideTransmissionFramebuffer) (renderer: Dynamic)._transmissionRenderTarget = renderTargetStore.acquire('transmission', targetSize.x, targetSize.y, {
+			magFilter: LinearFilter,
+			minFilter: LinearMipmapLinearFilter,
+			depthBuffer: true,
+			type: HalfFloatType,
+			encoding: LinearEncoding,
+			generateMipmaps: true,
+			msaaSamples: 4,
+		});
 
 		// render scene
 		var _toneMapping = renderer.toneMapping;
@@ -258,10 +273,14 @@ typedef GalaxyShape = {
 
 private class StarsMaterial extends RawShaderMaterial {
 
+	public var pointScale: Uniform<Float>;
+
 	public function new(shape: GalaxyShape) {
+		var pointScale = new Uniform(1.);
 		super({
 			uniforms: {
 				shape: new Uniform(shape),
+				pointScale: pointScale,
 				time_s: uTime_s,
 			},
 			vertexShader: '
@@ -269,6 +288,7 @@ private class StarsMaterial extends RawShaderMaterial {
 
 				uniform mat4 projectionMatrix;
 				uniform mat4 modelViewMatrix;
+				uniform float pointScale;
 				attribute vec3 position;
 
 				attribute vec4 special;
@@ -346,7 +366,7 @@ private class StarsMaterial extends RawShaderMaterial {
 						vIntensity = I;
 
 						// set sprite size to fit airy disk (approximate)
-						vPointScale = 5. / sqrt(eyeSpaceDistanceSq);
+						vPointScale = pointScale / sqrt(eyeSpaceDistanceSq);
 						gl_PointSize = min(vPointScale, 1000.);
 					}
 				}
@@ -384,6 +404,7 @@ private class StarsMaterial extends RawShaderMaterial {
 			depthTest: true,
 			transparent: false,
 		});
+		this.pointScale = pointScale;
 	}
 
 }

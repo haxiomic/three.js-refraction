@@ -3,20 +3,26 @@ import three.TextureEncoding;
 import three.ToneMapping;
 import three.MeshPhysicalMaterial;
 final gui = new dat_gui.GUI({
-	closed: true
+	closed: false
 });
 
 @:access(Main)
 function init() {
 	gui.domElement.style.userSelect = 'none';
 	gui.domElement.parentElement.style.zIndex = '1000';
+	var renderer = Main.renderer;
+
+	addProperty(gui, Main.overrideTransmissionFramebuffer).name('Fix Transmission').onChange(function(value) {
+		if ((renderer: Dynamic)._transmissionRenderTarget) {
+			(renderer: Dynamic)._transmissionRenderTarget.dispose();
+			(renderer: Dynamic)._transmissionRenderTarget = null;
+		}
+	});
 
 	{	// Rendering pipeline
 		var g = gui.addFolder('Rendering');
 		addProperty(g, Main.pixelRatio, 0.1, 4).name('resolution');
 		addProperty(g, Main.camera.fov, 1, 200, (v) -> Main.camera.updateProjectionMatrix());
-
-		var renderer = Main.renderer;
 
 		g.add({toneMapping: renderer.toneMapping}, 'toneMapping', {
 			'NoToneMapping': NoToneMapping,
