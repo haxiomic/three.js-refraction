@@ -1,3 +1,4 @@
+import three.Vector4;
 import Environments.EnvironmentManager;
 import VectorMath;
 import app.InteractionEventsManager;
@@ -54,6 +55,20 @@ final renderer = {
 
 	_.toneMappingExposure = 0.2;
 	_.physicallyCorrectLights = true;
+
+	var viewport = new Vector4();
+	(_: Dynamic).getTransmissionRenderTarget = () -> {
+		_.getCurrentViewport(viewport);
+		renderTargetStore.acquire('transmission', viewport.width, viewport.height, {
+			magFilter: LinearFilter,
+			minFilter: LinearMipmapLinearFilter,
+			depthBuffer: true,
+			type: HalfFloatType,
+			encoding: LinearEncoding,
+			generateMipmaps: true,
+			msaaSamples: 4,
+		});
+	}
 	_;
 }
 final gl = renderer.getContext();
@@ -214,17 +229,6 @@ function animationFrame(time_ms: Float) {
 			encoding: LinearEncoding,
 			msaaSamples: 4,
 		}) : null;
-
-		// transmission pass framebuffer
-		if (overrideTransmissionFramebuffer) (renderer: Dynamic)._transmissionRenderTarget = renderTargetStore.acquire('transmission', targetSize.x, targetSize.y, {
-			magFilter: LinearFilter,
-			minFilter: LinearMipmapLinearFilter,
-			depthBuffer: true,
-			type: HalfFloatType,
-			encoding: LinearEncoding,
-			generateMipmaps: true,
-			msaaSamples: 4,
-		});
 
 		// render scene
 		var _toneMapping = renderer.toneMapping;
