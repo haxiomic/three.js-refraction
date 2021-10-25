@@ -1,3 +1,5 @@
+## Building
+
 - install haxe, I'm using [haxe 4.2.3](https://haxe.org/download/)
 - install dependencies `npm install`
 - start auto-compiling live server: `npm start`
