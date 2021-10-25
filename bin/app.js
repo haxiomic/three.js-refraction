@@ -838,21 +838,18 @@ class control_ArcBallControl {
 				return 1;
 			});
 			options_interactionEventsManager.eventHandler.onPointerMoveCallbacks.push(function(e) {
-				let x = e.viewWidth;
-				let y = e.viewHeight;
+				let surfaceSize_x = e.viewWidth;
+				let surfaceSize_y = e.viewHeight;
 				if(_gthis._isPointerDown) {
 					let a = _gthis._onDown_clientXY;
-					_gthis.angleAroundXZ.target = _gthis._onDown_angleAroundXZ + (e.y / y - a.y / y) * _gthis.dragSpeed;
+					_gthis.angleAroundXZ.target = _gthis._onDown_angleAroundXZ + (e.y / surfaceSize_y - a.y / surfaceSize_y) * _gthis.dragSpeed;
 					let this1 = _gthis.orientation;
-					let v_x = 0;
-					let v_y = 1;
-					let v_z = 0;
-					let x1 = this1.x;
-					let y1 = this1.y;
-					let z = this1.z;
+					let u_x = this1.x;
+					let u_y = this1.y;
+					let u_z = this1.z;
 					let s = this1.w;
-					let y2 = y1 * (2 * (x1 * v_x + y1 * v_y + z * v_z)) + v_y * (s * s - (x1 * x1 + y1 * y1 + z * z)) + (z * v_x - x1 * v_z) * (2 * s);
-					_gthis.angleAroundY.target = _gthis._onDown_angleAroundY - (1.0 - Math.pow(Math.abs(y2) + 1,-4)) * (y2 >= 0 ? 1 : -1) * (e.x / x - a.x / x) * _gthis.dragSpeed * (x / y);
+					let up_y = u_y * (2 * (u_x * 0. + u_y + u_z * 0.)) + (s * s - (u_x * u_x + u_y * u_y + u_z * u_z)) + (u_z * 0. - u_x * 0.) * (2 * s);
+					_gthis.angleAroundY.target = _gthis._onDown_angleAroundY - (1.0 - Math.pow(Math.abs(up_y) + 1,-4)) * (up_y >= 0 ? 1 : -1) * (e.x / surfaceSize_x - a.x / surfaceSize_x) * _gthis.dragSpeed * (surfaceSize_x / surfaceSize_y);
 					return 0;
 				} else {
 					return 1;
@@ -880,22 +877,19 @@ class control_ArcBallControl {
 				_gthis._isPointerDown = false;
 			});
 			window.addEventListener("mousemove",function(e) {
-				let x = interactionSurface.clientWidth;
-				let y = interactionSurface.clientHeight;
+				let surfaceSize_x = interactionSurface.clientWidth;
+				let surfaceSize_y = interactionSurface.clientHeight;
 				let tmp;
 				if(_gthis._isPointerDown) {
 					let a = _gthis._onDown_clientXY;
-					_gthis.angleAroundXZ.target = _gthis._onDown_angleAroundXZ + (e.clientY / y - a.y / y) * _gthis.dragSpeed;
+					_gthis.angleAroundXZ.target = _gthis._onDown_angleAroundXZ + (e.clientY / surfaceSize_y - a.y / surfaceSize_y) * _gthis.dragSpeed;
 					let this1 = _gthis.orientation;
-					let v_x = 0;
-					let v_y = 1;
-					let v_z = 0;
-					let x1 = this1.x;
-					let y1 = this1.y;
-					let z = this1.z;
+					let u_x = this1.x;
+					let u_y = this1.y;
+					let u_z = this1.z;
 					let s = this1.w;
-					let y2 = y1 * (2 * (x1 * v_x + y1 * v_y + z * v_z)) + v_y * (s * s - (x1 * x1 + y1 * y1 + z * z)) + (z * v_x - x1 * v_z) * (2 * s);
-					_gthis.angleAroundY.target = _gthis._onDown_angleAroundY - (1.0 - Math.pow(Math.abs(y2) + 1,-4)) * (y2 >= 0 ? 1 : -1) * (e.clientX / x - a.x / x) * _gthis.dragSpeed * (x / y);
+					let up_y = u_y * (2 * (u_x * 0. + u_y + u_z * 0.)) + (s * s - (u_x * u_x + u_y * u_y + u_z * u_z)) + (u_z * 0. - u_x * 0.) * (2 * s);
+					_gthis.angleAroundY.target = _gthis._onDown_angleAroundY - (1.0 - Math.pow(Math.abs(up_y) + 1,-4)) * (up_y >= 0 ? 1 : -1) * (e.clientX / surfaceSize_x - a.x / surfaceSize_x) * _gthis.dragSpeed * (surfaceSize_x / surfaceSize_y);
 					tmp = 0;
 				} else {
 					tmp = 1;
@@ -980,6 +974,43 @@ var three_MeshPhysicalMaterial = require("three").MeshPhysicalMaterial;
 var three_WebGLRenderer = require("three").WebGLRenderer;
 var three_TextureEncoding = require("three");
 var three_ToneMapping = require("three");
+var three_Vector4 = require("three").Vector4;
+class rendering_RenderTargetStore {
+	static acquire(this1,uid,width,height,options,alwaysSyncOptions) {
+		if(alwaysSyncOptions == null) {
+			alwaysSyncOptions = false;
+		}
+		let target = this1.h[uid];
+		let needsNew = target == null;
+		if(alwaysSyncOptions && !needsNew) {
+			needsNew = options.depthBuffer != target.depthBuffer || options.stencilBuffer != target.stencilBuffer || options.depthTexture != target.depthTexture || (options.wrapS != null && target.texture.wrapS != options.wrapS || options.wrapT != null && target.texture.wrapT != options.wrapT || options.magFilter != null && target.texture.magFilter != options.magFilter || options.minFilter != null && target.texture.minFilter != options.minFilter || options.format != null && target.texture.format != options.format || options.type != null && target.texture.type != options.type || options.anisotropy != null && target.texture.anisotropy != options.anisotropy || options.msaaSamples != null && target.samples != options.msaaSamples);
+		}
+		if(needsNew) {
+			if(target != null) {
+				target.dispose();
+			}
+			if(options.msaaSamples > 0) {
+				let _ = new three_WebGLMultisampleRenderTarget(width,height,options);
+				_.samples = options.msaaSamples;
+				target = _;
+			} else {
+				target = new three_WebGLRenderTarget(width,height,options);
+			}
+			this1.h[uid] = target;
+		} else {
+			target.texture.generateMipmaps = options.generateMipmaps;
+			target.texture.encoding = options.encoding;
+			if(width != target.width || height != target.height) {
+				target.setSize(width,height);
+			}
+		}
+		return target;
+	}
+}
+var three_WebGLRenderTarget = require("three").WebGLRenderTarget;
+var three_WebGLMultisampleRenderTarget = require("three").WebGLMultisampleRenderTarget;
+var three_TextureFilter = require("three");
+var three_TextureDataType = require("three");
 var three_Scene = require("three").Scene;
 var three_DirectionalLight = require("three").DirectionalLight;
 var three_AmbientLight = require("three").AmbientLight;
@@ -1159,9 +1190,6 @@ function Main_animationFrame(time_ms) {
 	Main_update(time_s,dt_ms / 1000);
 	let usePostProcess = Main_bloomEnabled && Main_bloomAlpha > 0;
 	let mainRenderTarget = usePostProcess ? rendering_RenderTargetStore.acquire(Main_renderTargetStore,"main",x1,y1,{ magFilter : three_TextureFilter.LinearFilter, minFilter : three_TextureFilter.LinearFilter, depthBuffer : true, type : three_TextureDataType.HalfFloatType, encoding : three_TextureEncoding.LinearEncoding, msaaSamples : 4}) : null;
-	if(Main_overrideTransmissionFramebuffer) {
-		Main_renderer._transmissionRenderTarget = rendering_RenderTargetStore.acquire(Main_renderTargetStore,"transmission",x1,y1,{ magFilter : three_TextureFilter.LinearFilter, minFilter : three_TextureFilter.LinearMipmapLinearFilter, depthBuffer : true, type : three_TextureDataType.HalfFloatType, encoding : three_TextureEncoding.LinearEncoding, generateMipmaps : true, msaaSamples : 4});
-	}
 	let _toneMapping = Main_renderer.toneMapping;
 	if(usePostProcess) {
 		Main_renderer.toneMapping = three_ToneMapping.NoToneMapping;
@@ -1507,38 +1535,6 @@ class rendering_CopyShader extends three_RawShaderMaterial {
 		this.uOpacity.value = opacity;
 	}
 }
-class rendering_RenderTargetStore {
-	static acquire(this1,uid,width,height,options,alwaysSyncOptions) {
-		if(alwaysSyncOptions == null) {
-			alwaysSyncOptions = false;
-		}
-		let target = this1.h[uid];
-		let needsNew = target == null;
-		if(alwaysSyncOptions && !needsNew) {
-			needsNew = options.depthBuffer != target.depthBuffer || options.stencilBuffer != target.stencilBuffer || options.depthTexture != target.depthTexture || (options.wrapS != null && target.texture.wrapS != options.wrapS || options.wrapT != null && target.texture.wrapT != options.wrapT || options.magFilter != null && target.texture.magFilter != options.magFilter || options.minFilter != null && target.texture.minFilter != options.minFilter || options.format != null && target.texture.format != options.format || options.type != null && target.texture.type != options.type || options.anisotropy != null && target.texture.anisotropy != options.anisotropy || options.msaaSamples != null && target.samples != options.msaaSamples);
-		}
-		if(needsNew) {
-			if(target != null) {
-				target.dispose();
-			}
-			if(options.msaaSamples > 0) {
-				let _ = new three_WebGLMultisampleRenderTarget(width,height,options);
-				_.samples = options.msaaSamples;
-				target = _;
-			} else {
-				target = new three_WebGLRenderTarget(width,height,options);
-			}
-			this1.h[uid] = target;
-		} else {
-			target.texture.generateMipmaps = options.generateMipmaps;
-			target.texture.encoding = options.encoding;
-			if(width != target.width || height != target.height) {
-				target.setSize(width,height);
-			}
-		}
-		return target;
-	}
-}
 class shaders_BloomBlend extends three_RawShaderMaterial {
 	constructor() {
 		let uTexture = new three_Uniform(null);
@@ -1666,14 +1662,9 @@ var three_Mapping = require("three");
 var three_MeshBasicMaterial = require("three").MeshBasicMaterial;
 var three_NormalMapTypes = require("three");
 var three_PixelFormat = require("three");
-var three_TextureDataType = require("three");
-var three_TextureFilter = require("three");
 var three_TextureLoader = require("three").TextureLoader;
 var three_Vector2 = require("three").Vector2;
 var three_Vector3 = require("three").Vector3;
-var three_Vector4 = require("three").Vector4;
-var three_WebGLRenderTarget = require("three").WebGLRenderTarget;
-var three_WebGLMultisampleRenderTarget = require("three").WebGLMultisampleRenderTarget;
 var three_examples_jsm_loaders_rgbeloader_RGBELoader = require("three/examples/jsm/loaders/RGBELoader").RGBELoader;
 var tool_PMREMGeneratorInternal = require("three").PMREMGenerator;
 class tool_IBLGenerator extends tool_PMREMGeneratorInternal {
@@ -1759,6 +1750,11 @@ var Main_renderer = (function($this) {
 	_.toneMapping = three_ToneMapping.ACESFilmicToneMapping;
 	_.toneMappingExposure = 0.2;
 	_.physicallyCorrectLights = true;
+	let viewport = new three_Vector4();
+	_.getTransmissionRenderTarget = function() {
+		_.getCurrentViewport(viewport);
+		return rendering_RenderTargetStore.acquire(Main_renderTargetStore,"transmission",viewport.width,viewport.height,{ magFilter : three_TextureFilter.LinearFilter, minFilter : three_TextureFilter.LinearMipmapLinearFilter, depthBuffer : true, type : three_TextureDataType.HalfFloatType, encoding : three_TextureEncoding.LinearEncoding, generateMipmaps : true, msaaSamples : 4});
+	};
 	$r = _;
 	return $r;
 }(this));
