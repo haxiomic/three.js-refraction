@@ -141,12 +141,7 @@ function GUI_init() {
 	}});
 	GUI_gui.add(o,"f",0,1).name("overrideTransmissionFramebuffer").onChange(function(v) {
 		Main_overrideTransmissionFramebuffer = v;
-	}).listen().name("Fix Transmission").onChange(function(value) {
-		if(renderer._transmissionRenderTarget) {
-			renderer._transmissionRenderTarget.dispose();
-			renderer._transmissionRenderTarget = null;
-		}
-	});
+	}).listen().name("Fix Transmission");
 	let g = GUI_gui.addFolder("Rendering");
 	let o1 = { };
 	Object.defineProperty(o1,"f",{ set : function(x) {
@@ -1725,6 +1720,7 @@ rendering_FragmentRenderer.rttMesh = (function($this) {
 	return $r;
 }(this));
 var Main_pixelRatio = Math.min(window.devicePixelRatio,1);
+var Main_overrideTransmissionFramebuffer = false;
 var Main_scene = new three_Scene();
 var Main_camera = new three_PerspectiveCamera(100,1,0.0001,10);
 var Main_canvas = (function($this) {
@@ -1750,8 +1746,12 @@ var Main_renderer = (function($this) {
 	_.toneMapping = three_ToneMapping.ACESFilmicToneMapping;
 	_.toneMappingExposure = 0.2;
 	_.physicallyCorrectLights = true;
+	let _getTransmissionRenderTarget = _.getTransmissionRenderTarget;
 	let viewport = new three_Vector4();
 	_.getTransmissionRenderTarget = function() {
+		if(!Main_overrideTransmissionFramebuffer) {
+			return _getTransmissionRenderTarget();
+		}
 		_.getCurrentViewport(viewport);
 		return rendering_RenderTargetStore.acquire(Main_renderTargetStore,"transmission",viewport.width,viewport.height,{ magFilter : three_TextureFilter.LinearFilter, minFilter : three_TextureFilter.LinearMipmapLinearFilter, depthBuffer : true, type : three_TextureDataType.HalfFloatType, encoding : three_TextureEncoding.LinearEncoding, generateMipmaps : true, msaaSamples : 4});
 	};
@@ -1773,7 +1773,6 @@ var Main_bloomExponent = 2.2;
 var Main_bloomSigma = 0.38;
 var Main_bloomBlurRadius = 0.027;
 var Main_bloomBlurDownsampleIterations = 1;
-var Main_overrideTransmissionFramebuffer = false;
 var Main_sphere = (function($this) {
 	var $r;
 	let _ = new three_Mesh(new three_SphereGeometry(1,80,80),new three_MeshPhysicalMaterial({ roughness : 0.0, color : 16777215, transmission : 0.9, attenuationTint : new three_Color(23039), attenuationDistance : 1.7, clearcoat : 0.9}));
