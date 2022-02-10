@@ -216,15 +216,22 @@ function animationFrame(time_ms: Float) {
 		}) : null;
 
 		// transmission pass framebuffer
-		if (overrideTransmissionFramebuffer) (renderer: Dynamic)._transmissionRenderTarget = renderTargetStore.acquire('transmission', targetSize.x, targetSize.y, {
-			magFilter: LinearFilter,
-			minFilter: LinearMipmapLinearFilter,
-			depthBuffer: true,
-			type: HalfFloatType,
-			encoding: LinearEncoding,
-			generateMipmaps: true,
-			msaaSamples: 4,
-		});
+		if (overrideTransmissionFramebuffer) {
+			var transmissionSize = renderer.capabilities.isWebGL2 ? targetSize : floorPOT(targetSize);
+			(renderer: Dynamic)._transmissionRenderTarget = renderTargetStore.acquire(
+				'transmission',
+				transmissionSize.x, 
+				transmissionSize.y, {
+					magFilter: LinearFilter,
+					minFilter: LinearMipmapLinearFilter,
+					depthBuffer: true,
+					type: HalfFloatType,
+					encoding: LinearEncoding,
+					generateMipmaps: true,
+					msaaSamples: 4,
+				}
+			);
+		}
 
 		// render scene
 		var _toneMapping = renderer.toneMapping;
@@ -408,3 +415,8 @@ private class StarsMaterial extends RawShaderMaterial {
 	}
 
 }
+
+overload extern inline function floorPOT(v: Vec4): Vec4 return vec4(floorPOT(v.x), floorPOT(v.y), floorPOT(v.z), floorPOT(v.w));
+overload extern inline function floorPOT(v: Vec3): Vec3 return vec3(floorPOT(v.x), floorPOT(v.y), floorPOT(v.z));
+overload extern inline function floorPOT(v: Vec2): Vec2 return vec2(floorPOT(v.x), floorPOT(v.y));
+overload extern inline function floorPOT(v: Float): Float return Math.pow(2, Math.floor(Math.log(v) / 0.6931471805599453));
